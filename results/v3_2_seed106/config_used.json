@@ -1,0 +1,70 @@
+{
+  "seed": 106,
+  "paths": {
+    "manifest": "data/manifest.csv",
+    "image_root": "data/images",
+    "out_dir": "runs/v3_2"
+  },
+  "encoder": {
+    "name": "facebook/dinov2-base",
+    "trainable_blocks": 2,
+    "gradient_checkpointing": true
+  },
+  "views": {
+    "size": 224,
+    "local_resize": 448,
+    "local_grid": 2
+  },
+  "features": {
+    "hand_weight": 0.25
+  },
+  "augment": {
+    "crop_scale": [
+      0.8,
+      1.0
+    ],
+    "max_rotation_deg": 5.0,
+    "jitter": 0.05
+  },
+  "train": {
+    "batch_size": 4,
+    "grad_accum_steps": 8,
+    "eval_batch_size": 8,
+    "num_workers": 4,
+    "lr_head": 0.0001,
+    "lr_encoder": 2e-06,
+    "weight_decay": 0.03,
+    "dropout": 0.25,
+    "label_smoothing": 0.05,
+    "grad_clip": 1.0,
+    "warmup_epochs": 5,
+    "max_epochs": 60,
+    "min_epochs": 15,
+    "patience": 8,
+    "diag_train_images": 780
+  },
+  "warm_start": {
+    "C": 10.0,
+    "max_iter": 3000
+  },
+  "rejection": {
+    "prototypes_per_artist": 3,
+    "mix_grid": [
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7
+    ],
+    "temperature_grid": [
+      0.5,
+      0.75,
+      0.916667,
+      1.0,
+      1.5,
+      2.0,
+      3.0
+    ],
+    "target_far": 0.05
+  }
+}

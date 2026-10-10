@@ -42,9 +42,21 @@ def warm_start_head(model, loader, n_classes, cfg, device, amp_dtype) -> None:
     lr.fit(feats, y)
     if int(np.max(lr.n_iter_)) >= ws["max_iter"]:
         print("warning: warm-start logistic regression hit max_iter; raise warm_start.max_iter")
+    # lr.classes_ lists only the artists present in the data; place each one's weights in its own
+    # row and give any absent artist a strongly negative bias.
+    w = torch.zeros(n_classes, feats.shape[1])
+    b = torch.full((n_classes,), -10.0)
+    coef = torch.tensor(lr.coef_, dtype=torch.float32)
+    icpt = torch.tensor(lr.intercept_, dtype=torch.float32)
+    if len(lr.classes_) == 2:  # sklearn returns a single row for two classes
+        coef, icpt = torch.cat([-coef, coef]), torch.cat([-icpt, icpt])
+    for row, c in enumerate(lr.classes_):
+        w[int(c)], b[int(c)] = coef[row], icpt[row]
+    if len(lr.classes_) < n_classes:
+        print(f"warning: only {len(lr.classes_)}/{n_classes} artists in the warm-start data")
     with torch.no_grad():
-        model.head.weight.copy_(torch.tensor(lr.coef_, dtype=torch.float32))
-        model.head.bias.copy_(torch.tensor(lr.intercept_, dtype=torch.float32))
+        model.head.weight.copy_(w)
+        model.head.bias.copy_(b)
 
 
 def main() -> None:
@@ -73,8 +85,9 @@ def main() -> None:
     label_map = {a: i for i, a in enumerate(artists)}
     known = df[df.role == "known"]
     tr, va = known[known.split == "train"], known[known.split == "val"]
-    if args.max_train:
-        tr = tr.sample(n=min(args.max_train, len(tr)), random_state=seed)
+    if args.max_train:  # debug subset that still covers every artist
+        per_artist = max(2, math.ceil(args.max_train / len(artists)))
+        tr = tr.sample(frac=1.0, random_state=seed).groupby("artist").head(per_artist)
     tcfg = cfg["train"]
     diag = tr.sample(n=min(tcfg["diag_train_images"], len(tr)), random_state=seed)
     print(f"{len(artists)} artists | train {len(tr)} | val {len(va)} | diag {len(diag)}")
