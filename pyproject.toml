@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "artistid"
+version = "0.3.2"
+description = "Artist identification with DINOv2 fusion, multi-view inputs and unknown-artist rejection"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.3",
+  "torchvision>=0.18",
+  "transformers>=4.40",
+  "numpy",
+  "pandas",
+  "scipy",
+  "scikit-learn",
+  "scikit-image",
+  "pillow",
+  "pyyaml",
+  "tqdm",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

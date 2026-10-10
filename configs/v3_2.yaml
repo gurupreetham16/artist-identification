@@ -1,0 +1,52 @@
+# V3.2 config. Values marked [V3] come from the V3 report; [NEW] are the changes.
+seed: 106                          # [V3] run seeds 106, 107, 108 for a mean +/- SD
+
+paths:
+  manifest: data/manifest.csv      # see scripts/make_manifest.py
+  image_root: data/images          # manifest paths are relative to this
+  out_dir: runs/v3_2
+
+encoder:
+  name: facebook/dinov2-base       # [NEW] was facebook/dinov2-small (ViT-S/14). base = 768-d
+  trainable_blocks: 2              # [V3] last two blocks + final norm
+  gradient_checkpointing: true     # [NEW] memory safety on 8 GB GPUs
+
+views:
+  size: 224                        # [V3] aspect-preserving letterbox
+  local_resize: 448                # [NEW] long side for the local tiles
+  local_grid: 2                    # [NEW] 2x2 tiles -> 5 views per painting. 0 = global view only
+
+features:
+  hand_weight: 0.25                # [V3] HSV/LBP and HOG branch weights
+
+augment:                           # [V3] mild, artist-preserving
+  crop_scale: [0.8, 1.0]
+  max_rotation_deg: 5.0
+  jitter: 0.05                     # brightness / contrast
+
+train:
+  batch_size: 4                    # [NEW] 5 views per image; was 8
+  grad_accum_steps: 8              # [NEW] effective batch 32 (same as V3)
+  eval_batch_size: 8
+  num_workers: 4                   # lower to 0-2 on Windows if the loader hangs
+  lr_head: 1.0e-4                  # [V3]
+  lr_encoder: 2.0e-6               # [V3]
+  weight_decay: 0.03               # [V3]
+  dropout: 0.25                    # [V3]
+  label_smoothing: 0.05            # [V3]
+  grad_clip: 1.0                   # [V3]
+  warmup_epochs: 5                 # [V3]
+  max_epochs: 60                   # [V3]
+  min_epochs: 15                   # [V3]
+  patience: 8                      # [V3]
+  diag_train_images: 780           # [V3] fixed train subset for the gap diagnostic
+
+warm_start:                        # [V3] converged logistic head on frozen features
+  C: 10.0
+  max_iter: 3000
+
+rejection:
+  prototypes_per_artist: 3         # [NEW] V3 used 1
+  mix_grid: [0.3, 0.4, 0.5, 0.6, 0.7]   # [NEW] V3 fixed 0.5
+  temperature_grid: [0.5, 0.75, 0.916667, 1.0, 1.5, 2.0, 3.0]
+  target_far: 0.05                 # [V3] unknown false-acceptance target

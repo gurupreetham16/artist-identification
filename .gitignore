@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+artist-env/
+runs/
+data/
+*.pt
+*.npz
+.ipynb_checkpoints/
